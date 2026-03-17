@@ -1,5 +1,6 @@
-import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { colors, typography, spacing } from '@/constants/theme';
+import { AutoScheduleIcon, SortIcon } from '@/components/icons';
+import { colors, spacing, typography } from '@/constants/theme';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 export function AgendaHeader() {
   return (
@@ -7,10 +8,10 @@ export function AgendaHeader() {
       <Text style={styles.title}>Agenda</Text>
       <View style={styles.actions}>
         <Pressable style={styles.iconButton}>
-          <Text style={styles.icon}>📅</Text>
+          <AutoScheduleIcon size={16} color={colors.content} />
         </Pressable>
         <Pressable style={styles.iconButton}>
-          <Text style={styles.icon}>↕️</Text>
+          <SortIcon size={16} color={colors.content} />
         </Pressable>
       </View>
     </View>
@@ -23,12 +24,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.xl,
-    paddingBottom: spacing.lg,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.sm,
   },
   title: {
-    ...typography.titleSmall,
+    ...typography.bodySmall,
     color: colors.content,
+    opacity: 0.7,
   },
   actions: {
     flexDirection: 'row',
@@ -37,11 +39,9 @@ const styles = StyleSheet.create({
   iconButton: {
     width: 40,
     height: 40,
+    borderRadius: 108,
+    backgroundColor: colors.border,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  icon: {
-    fontSize: 16,
-    color: colors.content,
   },
 });
