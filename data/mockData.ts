@@ -54,7 +54,6 @@ export const mockTasks: Task[] = [
     id: 'task-2',
     listId: 'list-events',
     title: 'This is an event',
-    notes: 'All Day',
     type: 'event',
     isPriority: false,
     isCompleted: false,

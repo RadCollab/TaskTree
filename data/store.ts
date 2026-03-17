@@ -9,6 +9,8 @@ interface TaskTreeState {
   toggleComplete: (taskId: string) => void;
   toggleSelected: (taskId: string) => void;
   clearSelection: () => void;
+  addTask: (title: string) => void;
+  updateTaskTitle: (taskId: string, title: string) => void;
 }
 
 const TaskTreeContext = createContext<TaskTreeState | null>(null);
@@ -49,10 +51,49 @@ export function TaskTreeProvider({ children }: { children: ReactNode }) {
     setSelectedIds(new Set());
   }, []);
 
+  const addTask = useCallback((title: string) => {
+    const now = new Date().toISOString();
+    const today = now.split('T')[0];
+    const newTask: Task = {
+      id: `task-${Date.now()}`,
+      listId: 'list-tasks',
+      title,
+      type: 'task',
+      isPriority: false,
+      isCompleted: false,
+      date: today,
+      isAllDay: false,
+      repeats: false,
+      notificationEnabled: false,
+      createdAt: now,
+      updatedAt: now,
+    };
+    setTasks((prev) => [...prev, newTask]);
+  }, []);
+
+  const updateTaskTitle = useCallback((taskId: string, title: string) => {
+    setTasks((prev) =>
+      prev.map((t) =>
+        t.id === taskId
+          ? { ...t, title, updatedAt: new Date().toISOString() }
+          : t
+      )
+    );
+  }, []);
+
   return React.createElement(
     TaskTreeContext.Provider,
     {
-      value: { lists, tasks, selectedIds, toggleComplete, toggleSelected, clearSelection },
+      value: {
+        lists,
+        tasks,
+        selectedIds,
+        toggleComplete,
+        toggleSelected,
+        clearSelection,
+        addTask,
+        updateTaskTitle,
+      },
     },
     children
   );

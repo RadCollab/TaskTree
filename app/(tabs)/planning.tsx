@@ -1,9 +1,9 @@
-import { ScrollView, View, Text, StyleSheet, Pressable } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, typography, spacing } from '@/constants/theme';
-import { useTaskTree } from '@/data/store';
 import { ListSection } from '@/components/planning/ListSection';
 import { MultiSelectBar } from '@/components/planning/MultiSelectBar';
+import { colors, spacing, typography } from '@/constants/theme';
+import { useTaskTree } from '@/data/store';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function PlanningScreen() {
   const { tasks, lists, toggleComplete, toggleSelected, selectedIds, clearSelection } = useTaskTree();

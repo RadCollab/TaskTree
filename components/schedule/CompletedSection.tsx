@@ -18,10 +18,8 @@ export function CompletedSection({ tasks, lists, onToggleComplete }: CompletedSe
   return (
     <View style={styles.container}>
       <Pressable style={styles.header} onPress={() => setIsExpanded(!isExpanded)}>
-        <View style={styles.toggle}>
-          <Text style={[styles.chevron, isExpanded && styles.chevronExpanded]}>›</Text>
-        </View>
-        <Text style={styles.label}>Completed ({tasks.length})</Text>
+        <Text style={styles.label}>Completed</Text>
+        <Text style={[styles.chevron, isExpanded && styles.chevronExpanded]}>›</Text>
       </Pressable>
       {isExpanded &&
         tasks.map((task) => (
@@ -38,7 +36,9 @@ export function CompletedSection({ tasks, lists, onToggleComplete }: CompletedSe
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: spacing.lg,
+    backgroundColor: colors.surface.bg,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: 10,
   },
   header: {
     flexDirection: 'row',
@@ -47,22 +47,17 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
     gap: spacing.sm,
   },
-  toggle: {
-    width: 14,
-    height: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  chevron: {
-    ...typography.titleMedium,
-    color: colors.content,
-    fontSize: 18,
-  },
-  chevronExpanded: {
-    transform: [{ rotate: '90deg' }],
-  },
   label: {
     ...typography.bodySmall,
     color: colors.content,
+    opacity: 0.7,
+  },
+  chevron: {
+    fontSize: 14,
+    color: colors.content,
+    opacity: 0.7,
+  },
+  chevronExpanded: {
+    transform: [{ rotate: '90deg' }],
   },
 });

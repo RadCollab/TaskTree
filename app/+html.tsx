@@ -30,4 +30,7 @@ export default function Root({ children }: { children: React.ReactNode }) {
 const responsiveBackground = `
 body {
   background-color: #f7f5ee;
+}
+textarea {
+  field-sizing: content;
 }`;
