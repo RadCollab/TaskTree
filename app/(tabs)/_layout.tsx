@@ -1,71 +1,78 @@
 import React from 'react';
-import { SymbolView } from 'expo-symbols';
-import { Link, Tabs } from 'expo-router';
-import { Platform, Pressable } from 'react-native';
+import { Tabs } from 'expo-router';
+import { StyleSheet, View, Text } from 'react-native';
+import { colors, shadows, typography } from '@/constants/theme';
 
-import Colors from '@/constants/Colors';
-import { useColorScheme } from '@/components/useColorScheme';
-import { useClientOnlyValue } from '@/components/useClientOnlyValue';
+function TabIcon({ name, color, focused }: { name: string; color: string; focused: boolean }) {
+  return (
+    <View style={[styles.iconContainer, focused && styles.iconContainerActive]}>
+      <Text style={[styles.iconText, { color }]}>{name === 'schedule' ? '📅' : '✏️'}</Text>
+      <Text style={[styles.iconLabel, { color }]}>{name === 'schedule' ? 'Schedule' : 'Planning'}</Text>
+    </View>
+  );
+}
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme].tint,
-        // Disable the static render of the header on web
-        // to prevent a hydration error in React Navigation v6.
-        headerShown: useClientOnlyValue(false, true),
-      }}>
+        headerShown: false,
+        tabBarActiveTintColor: colors.content,
+        tabBarInactiveTintColor: colors.borderDk,
+        tabBarStyle: {
+          backgroundColor: colors.surface.card,
+          borderTopColor: colors.border,
+          ...shadows.nav,
+          height: 78,
+          paddingTop: 8,
+        },
+        tabBarLabelStyle: {
+          fontFamily: 'NunitoSans_700Bold',
+          fontSize: 11,
+        },
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Tab One',
-          tabBarIcon: ({ color }) => (
-            <SymbolView
-              name={{
-                ios: 'chevron.left.forwardslash.chevron.right',
-                android: 'code',
-                web: 'code',
-              }}
-              tintColor={color}
-              size={28}
-            />
+          title: 'Schedule',
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon name="schedule" color={color} focused={focused} />
           ),
-          headerRight: () => (
-            <Link href="/modal" asChild>
-              <Pressable style={{ marginRight: 15 }}>
-                {({ pressed }) => (
-                  <SymbolView
-                    name={{ ios: 'info.circle', android: 'info', web: 'info' }}
-                    size={25}
-                    tintColor={Colors[colorScheme].text}
-                    style={{ opacity: pressed ? 0.5 : 1 }}
-                  />
-                )}
-              </Pressable>
-            </Link>
-          ),
+          tabBarLabel: () => null,
         }}
       />
       <Tabs.Screen
-        name="two"
+        name="planning"
         options={{
-          title: 'Tab Two',
-          tabBarIcon: ({ color }) => (
-            <SymbolView
-              name={{
-                ios: 'chevron.left.forwardslash.chevron.right',
-                android: 'code',
-                web: 'code',
-              }}
-              tintColor={color}
-              size={28}
-            />
+          title: 'Planning',
+          tabBarIcon: ({ color, focused }) => (
+            <TabIcon name="planning" color={color} focused={focused} />
           ),
+          tabBarLabel: () => null,
         }}
       />
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  iconContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    gap: 6,
+  },
+  iconContainerActive: {
+    backgroundColor: colors.surface.bg,
+  },
+  iconText: {
+    fontSize: 14,
+  },
+  iconLabel: {
+    fontFamily: 'NunitoSans_700Bold',
+    fontSize: 11,
+  },
+});
