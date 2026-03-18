@@ -1,5 +1,5 @@
 import React from 'react';
-import Svg, { Path, Rect } from 'react-native-svg';
+import Svg, { Path, Rect, Circle } from 'react-native-svg';
 
 interface IconProps {
   size?: number;
@@ -91,6 +91,61 @@ export function SortIcon({ size = 16, color = '#312a47' }: IconProps) {
         d="M160 464L64 352H256L160 464Z"
         fill={color}
       />
+    </Svg>
+  );
+}
+
+export function TypeIcon({ size = 12, color = '#312a47', icon = 'circle' }: IconProps & { icon?: string }) {
+  if (icon === 'square') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 16 16" fill="none">
+        <Rect x="3" y="3" width="10" height="10" rx="2" fill={color} />
+      </Svg>
+    );
+  }
+  if (icon === 'star') {
+    return (
+      <Svg width={size} height={size} viewBox="0 0 16 16" fill="none">
+        <Path
+          d="M8 2L9.8 6.2L14 6.9L10.9 9.8L11.6 14L8 12L4.4 14L5.1 9.8L2 6.9L6.2 6.2L8 2Z"
+          fill={color}
+        />
+      </Svg>
+    );
+  }
+  // Default: circle (task)
+  return (
+    <Svg width={size} height={size} viewBox="0 0 16 16" fill="none">
+      <Rect x="2.5" y="2.5" width="11" height="11" rx="4.5" fill={color} />
+    </Svg>
+  );
+}
+
+export function EllipsisIcon({ size = 16, color = '#312a47' }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 16 16" fill="none">
+      <Circle cx="3" cy="8" r="1.5" fill={color} />
+      <Circle cx="8" cy="8" r="1.5" fill={color} />
+      <Circle cx="13" cy="8" r="1.5" fill={color} />
+    </Svg>
+  );
+}
+
+export function TrashIcon({ size = 16, color = '#312a47' }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 448 512" fill="none">
+      <Path
+        d="M160 400C160 408.8 152.8 416 144 416C135.2 416 128 408.8 128 400V192C128 183.2 135.2 176 144 176C152.8 176 160 183.2 160 192V400ZM240 400C240 408.8 232.8 416 224 416C215.2 416 208 408.8 208 400V192C208 183.2 215.2 176 224 176C232.8 176 240 183.2 240 192V400ZM320 400C320 408.8 312.8 416 304 416C295.2 416 288 408.8 288 400V192C288 183.2 295.2 176 304 176C312.8 176 320 183.2 320 192V400ZM310.1 22.6L336.9 64H432C440.8 64 448 71.2 448 80C448 88.8 440.8 96 432 96H416V432C416 476.2 380.2 512 336 512H112C67.8 512 32 476.2 32 432V96H16C7.2 96 0 88.8 0 80C0 71.2 7.2 64 16 64H111.1L137.9 22.6C145.8 8.6 160.8 0 177.1 0H270.9C287.2 0 302.2 8.6 310.1 22.6ZM153.9 64H294.1L279.1 40.2C277.8 38.1 275.5 36.8 273 36.8H175C172.5 36.8 170.2 38.1 168.9 40.2L153.9 64ZM80 432C80 449.7 94.3 464 112 464H336C353.7 464 368 449.7 368 432V96H80V432Z"
+        fill={color}
+      />
+    </Svg>
+  );
+}
+
+export function PlusIcon({ size = 12, color = '#312a47' }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 12 12" fill="none">
+      <Path d="M6 1V11M1 6H11" stroke={color} strokeWidth={2} strokeLinecap="round" />
     </Svg>
   );
 }

@@ -18,11 +18,15 @@ export interface Task {
   updatedAt: string;
 }
 
+export type IconShape =
+  | 'circle' | 'square' | 'heart' | 'traingle' | 'star'
+  | 'blob' | 'burst' | 'diamond' | 'pentagon' | 'hexagon' | 'bookmark';
+
 export interface TaskList {
   id: string;
   name: string;
   color: string;
-  icon: string;
+  icon: IconShape;
   behavior: 'task' | 'event';
   isSystem: boolean;
   sortOrder: number;

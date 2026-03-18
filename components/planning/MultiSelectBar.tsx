@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, Pressable } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, typography, spacing, shadows } from '@/constants/theme';
+import { colors, typography } from '@/constants/theme';
+import { ListCheckIcon, TrashIcon } from '@/components/icons';
 
 interface MultiSelectBarProps {
   selectedCount: number;
@@ -9,48 +9,75 @@ interface MultiSelectBarProps {
 }
 
 export function MultiSelectBar({ selectedCount, onClear, onAddToSchedule }: MultiSelectBarProps) {
-  if (selectedCount === 0) return null;
+  const isActive = selectedCount > 0;
 
   return (
-    <View style={styles.container}>
-      <Pressable style={styles.clearButton} onPress={onClear}>
-        <Text style={styles.clearText}>Clear</Text>
-      </Pressable>
-      <Pressable style={styles.addButton} onPress={onAddToSchedule}>
-        <Text style={styles.addText}>Add to Schedule</Text>
-      </Pressable>
+    <View style={[styles.container, !isActive && styles.containerInactive]}>
+      <View style={styles.row}>
+        <Pressable
+          style={styles.clearButton}
+          onPress={onClear}
+          disabled={!isActive}
+        >
+          <TrashIcon size={16} color={colors.content} />
+          <Text style={styles.clearText}>Clear</Text>
+        </Pressable>
+        <Pressable
+          style={styles.addButton}
+          onPress={onAddToSchedule}
+          disabled={!isActive}
+        >
+          <ListCheckIcon size={16} color={colors.surface.bg} />
+          <Text style={styles.addText}>Add to Schedule</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.xxl,
-    paddingVertical: spacing.md,
-    backgroundColor: colors.surface.card,
+    backgroundColor: colors.surface.bg,
     borderTopWidth: 1,
     borderTopColor: colors.border,
-    ...shadows.nav,
+    paddingTop: 8,
+    paddingBottom: 16,
+  },
+  containerInactive: {
+    opacity: 0.3,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 32,
   },
   clearButton: {
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: colors.border,
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    borderRadius: 108,
   },
   clearText: {
     ...typography.bodySmall,
     color: colors.content,
   },
   addButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
     backgroundColor: colors.content,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.xl,
-    borderRadius: 20,
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    borderRadius: 108,
   },
   addText: {
     ...typography.bodySmall,
-    color: '#fff',
+    color: colors.surface.bg,
   },
 });
