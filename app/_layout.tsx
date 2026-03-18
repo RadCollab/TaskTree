@@ -3,6 +3,7 @@ import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { TaskTreeProvider } from '@/data/store';
 import { colors } from '@/constants/theme';
@@ -37,15 +38,17 @@ export default function RootLayout() {
   }
 
   return (
-    <TaskTreeProvider>
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: colors.surface.bg },
-        }}
-      >
-        <Stack.Screen name="(tabs)" />
-      </Stack>
-    </TaskTreeProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <TaskTreeProvider>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: colors.surface.bg },
+          }}
+        >
+          <Stack.Screen name="(tabs)" />
+        </Stack>
+      </TaskTreeProvider>
+    </GestureHandlerRootView>
   );
 }

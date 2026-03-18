@@ -1,24 +1,66 @@
-import { useState, useRef } from 'react';
-import { ScrollView, View, Text, TextInput, StyleSheet, Pressable, Platform } from 'react-native';
+import { useState, useRef, useCallback } from 'react';
+import {
+  ScrollView,
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  Pressable,
+  Platform,
+  useWindowDimensions,
+  Easing,
+  Alert,
+} from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors, typography, spacing } from '@/constants/theme';
+import { colors, typography, spacing, shadows } from '@/constants/theme';
 import { useTaskTree } from '@/data/store';
 import { RivePlaceholder } from '@/components/schedule/RivePlaceholder';
 import { AgendaHeader } from '@/components/schedule/AgendaHeader';
-import { TaskItem } from '@/components/schedule/TaskItem';
+import { DraggableTaskList } from '@/components/schedule/DraggableTaskList';
+import { ListSection } from '@/components/planning/ListSection';
+import { MultiSelectBar } from '@/components/planning/MultiSelectBar';
+import { ListCheckIcon, PenToSquareIcon } from '@/components/icons';
 
-export default function ScheduleScreen() {
-  const { tasks, lists, toggleComplete, addTask, updateTaskTitle } = useTaskTree();
+const SLIDE_TIMING = { duration: 400, easing: Easing.out(Easing.cubic) };
+
+export default function MainScreen() {
+  const {
+    tasks, lists, toggleComplete, addTask, updateTaskTitle,
+    reorderTasks, updateTaskList, toggleSelected, selectedIds, clearSelection,
+    scheduleTaskIds, deleteTasks,
+  } = useTaskTree();
   const insets = useSafeAreaInsets();
+  const { height: screenHeight } = useWindowDimensions();
+
+  const [activeTab, setActiveTab] = useState<'schedule' | 'planning'>('schedule');
+  const slideY = useSharedValue(0);
+
+  // Schedule state
   const [isAdding, setIsAdding] = useState(false);
   const [newTaskText, setNewTaskText] = useState('');
   const addInputRef = useRef<TextInput>(null);
 
   const today = new Date().toISOString().split('T')[0];
   const todayTasks = tasks.filter((t) => t.date === today);
-  const incompleteTasks = todayTasks.filter((t) => !t.isCompleted);
 
+  // The schedule section height = screen height minus tab bar area
+  const TAB_BAR_HEIGHT = 70;
+  const scheduleHeight = screenHeight - TAB_BAR_HEIGHT - insets.bottom;
 
+  const switchTab = useCallback((tab: 'schedule' | 'planning') => {
+    setActiveTab(tab);
+    slideY.value = withTiming(
+      tab === 'planning' ? -scheduleHeight : 0,
+      SLIDE_TIMING
+    );
+  }, [slideY, scheduleHeight]);
+
+  const animatedContainerStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: slideY.value }],
+  }));
+
+  // Schedule handlers
   const handleAddPress = () => {
     setIsAdding(true);
     setTimeout(() => addInputRef.current?.focus(), 50);
@@ -26,69 +68,147 @@ export default function ScheduleScreen() {
 
   const handleAddSubmit = () => {
     const trimmed = newTaskText.trim();
-    if (trimmed) {
-      addTask(trimmed);
-    }
+    if (trimmed) addTask(trimmed);
     setNewTaskText('');
     setIsAdding(false);
   };
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top }]}>
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
-        <RivePlaceholder />
-        <AgendaHeader />
+    <View style={[styles.outerContainer, { paddingBottom: insets.bottom }]}>
+      <Animated.View style={[styles.slideContainer, animatedContainerStyle]}>
+        {/* ===== SCHEDULE SECTION ===== */}
+        <View style={[styles.scheduleSection, { height: scheduleHeight, paddingTop: insets.top }]}>
+          <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+            <RivePlaceholder />
+            <AgendaHeader />
 
-        {/* Tasks - completed stay in place */}
-        <View style={styles.taskList}>
-          {todayTasks.map((task) => (
-            <TaskItem
-              key={task.id}
-              task={task}
-              list={lists.find((l) => l.id === task.listId)}
+            <DraggableTaskList
+              tasks={todayTasks}
+              lists={lists}
               onToggleComplete={toggleComplete}
               onUpdateTitle={updateTaskTitle}
+              onUpdateList={updateTaskList}
+              onReorder={reorderTasks}
             />
-          ))}
+
+            {isAdding ? (
+              <View style={styles.addInputRow}>
+                <View style={styles.addIconContainer}>
+                  <Text style={styles.addIconPlus}>+</Text>
+                </View>
+                <TextInput
+                  ref={addInputRef}
+                  style={styles.addInput}
+                  value={newTaskText}
+                  onChangeText={setNewTaskText}
+                  onBlur={handleAddSubmit}
+                  placeholder="New task..."
+                  placeholderTextColor={colors.borderDk}
+                  multiline
+                  blurOnSubmit
+                  returnKeyType="done"
+                />
+              </View>
+            ) : (
+              <Pressable style={styles.addButton} onPress={handleAddPress}>
+                <View style={styles.addIconContainer}>
+                  <Text style={styles.addIconPlus}>+</Text>
+                </View>
+                <Text style={styles.addText}>Add</Text>
+              </Pressable>
+            )}
+
+            <View style={{ height: 40 }} />
+          </ScrollView>
         </View>
 
-        {/* Add button / inline input */}
-        {isAdding ? (
-          <View style={styles.addInputRow}>
-            <View style={styles.addIconContainer}>
-              <Text style={styles.addIconPlus}>+</Text>
-            </View>
-            <TextInput
-              ref={addInputRef}
-              style={styles.addInput}
-              value={newTaskText}
-              onChangeText={setNewTaskText}
-              onBlur={handleAddSubmit}
-              placeholder="New task..."
-              placeholderTextColor={colors.borderDk}
-              multiline
-              blurOnSubmit
-              returnKeyType="done"
-            />
+        {/* ===== TAB BAR ===== */}
+        <View style={[styles.tabBar, activeTab === 'schedule' && styles.tabBarSchedule]}>
+          <View style={styles.segmentBar}>
+            <Pressable
+              style={[styles.segmentItem, activeTab === 'schedule' && styles.segmentItemActive]}
+              onPress={() => switchTab('schedule')}
+            >
+              <ListCheckIcon size={16} color={colors.content} />
+              <Text style={styles.segmentLabel}>Schedule</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.segmentItem, activeTab === 'planning' && styles.segmentItemActive]}
+              onPress={() => switchTab('planning')}
+            >
+              <PenToSquareIcon size={16} color={colors.content} />
+              <Text style={styles.segmentLabel}>Planning</Text>
+            </Pressable>
           </View>
-        ) : (
-          <Pressable style={styles.addButton} onPress={handleAddPress}>
-            <View style={styles.addIconContainer}>
-              <Text style={styles.addIconPlus}>+</Text>
-            </View>
-            <Text style={styles.addText}>Add</Text>
-          </Pressable>
-        )}
+        </View>
 
-        <View style={{ height: 40 }} />
-      </ScrollView>
+        {/* ===== PLANNING SECTION ===== */}
+        <View style={[styles.planningSection, { height: screenHeight - TAB_BAR_HEIGHT - insets.top }]}>
+          <View style={styles.hintBar}>
+            <Text style={styles.hintText}>Tap on the left icon to multi-select</Text>
+          </View>
+
+          <ScrollView style={styles.scroll} contentContainerStyle={styles.planningScrollContent}>
+            {lists.map((list) => (
+              <ListSection
+                key={list.id}
+                list={list}
+                tasks={tasks.filter((t) => t.listId === list.id && !t.isCompleted && !t.date)}
+                onToggleComplete={toggleComplete}
+                onToggleSelected={toggleSelected}
+                selectedIds={selectedIds}
+              />
+            ))}
+
+            <Pressable style={styles.manageButton}>
+              <Text style={styles.manageIcon}>⚙️</Text>
+              <Text style={styles.manageText}>Manage Lists</Text>
+            </Pressable>
+
+            <View style={{ height: 40 }} />
+          </ScrollView>
+
+          <MultiSelectBar
+            selectedCount={selectedIds.size}
+            onClear={() => {
+              if (selectedIds.size === 0) return;
+              const count = selectedIds.size;
+              const msg = `Are you sure you want to delete ${count} task${count > 1 ? 's' : ''}?`;
+              const doDelete = () => {
+                deleteTasks([...selectedIds]);
+                clearSelection();
+              };
+              if (Platform.OS === 'web') {
+                if (window.confirm(msg)) doDelete();
+              } else {
+                Alert.alert('Delete Tasks', msg, [
+                  { text: 'Cancel', style: 'cancel' },
+                  { text: 'Delete', style: 'destructive', onPress: doDelete },
+                ]);
+              }
+            }}
+            onAddToSchedule={() => {
+              scheduleTaskIds([...selectedIds]);
+              clearSelection();
+            }}
+          />
+        </View>
+      </Animated.View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  outerContainer: {
     flex: 1,
+    backgroundColor: colors.surface.bg,
+    overflow: 'hidden',
+  },
+  slideContainer: {
+    flex: 0,
+  },
+  // Schedule
+  scheduleSection: {
     backgroundColor: colors.surface.bg,
   },
   scroll: {
@@ -96,9 +216,6 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingBottom: spacing.xxl,
-  },
-  taskList: {
-    gap: spacing.lg,
   },
   addButton: {
     flexDirection: 'row',
@@ -136,5 +253,76 @@ const styles = StyleSheet.create({
     backgroundColor: colors.border,
     borderRadius: 4,
     ...(Platform.OS === 'web' ? { outlineStyle: 'none' as any } : {}),
+  },
+  // Tab bar
+  tabBar: {
+    backgroundColor: colors.surface.bg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingTop: 14,
+    paddingBottom: 16,
+  },
+  tabBarSchedule: {
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  segmentBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.border,
+    borderRadius: 57,
+    paddingHorizontal: 4,
+    paddingVertical: 4,
+  },
+  segmentItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 8,
+    borderRadius: 108,
+  },
+  segmentItemActive: {
+    backgroundColor: colors.surface.card,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    ...shadows.nav,
+  },
+  segmentLabel: {
+    ...typography.bodySmall,
+    color: colors.content,
+  },
+  // Planning
+  planningSection: {
+    backgroundColor: colors.surface.bg,
+  },
+  hintBar: {
+    paddingHorizontal: spacing.lg,
+    paddingVertical: spacing.sm,
+  },
+  hintText: {
+    ...typography.titleSmall,
+    color: colors.borderDk,
+    textAlign: 'center',
+  },
+  planningScrollContent: {
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.xxl,
+  },
+  manageButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    marginHorizontal: spacing.lg,
+    paddingVertical: spacing.lg,
+    marginTop: spacing.sm,
+  },
+  manageIcon: {
+    fontSize: 14,
+  },
+  manageText: {
+    ...typography.bodySmall,
+    color: colors.content,
   },
 });
