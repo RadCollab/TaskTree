@@ -2,7 +2,7 @@ import { useState, useRef, useCallback } from 'react';
 import { View, Text, TextInput, StyleSheet, Pressable, Platform } from 'react-native';
 import { colors, typography, spacing } from '@/constants/theme';
 import { Task, TaskList } from '@/data/types';
-import { PriorityIcon, PlusIcon } from '@/components/icons';
+import { PenToSquareIcon, PriorityIcon, PlusIcon } from '@/components/icons';
 import { TaskTypeIcon } from '@/components/icons/TaskTypeIcon';
 import { TypeSelector } from './TypeSelector';
 
@@ -13,9 +13,18 @@ interface TaskItemProps {
   onToggleComplete: (id: string) => void;
   onUpdateTitle?: (id: string, title: string) => void;
   onUpdateList?: (id: string, listId: string) => void;
+  onUnscheduleTask?: (id: string) => void;
 }
 
-export function TaskItem({ task, list, allLists, onToggleComplete, onUpdateTitle, onUpdateList }: TaskItemProps) {
+export function TaskItem({
+  task,
+  list,
+  allLists,
+  onToggleComplete,
+  onUpdateTitle,
+  onUpdateList,
+  onUnscheduleTask,
+}: TaskItemProps) {
   const isEvent = task.type === 'event';
   const listColor = list?.color ?? colors.content;
   const [isEditing, setIsEditing] = useState(false);
@@ -60,6 +69,13 @@ export function TaskItem({ task, list, allLists, onToggleComplete, onUpdateTitle
     onUpdateList?.(task.id, listId);
     setShowTypeSelector(false);
     setTimeout(() => inputRef.current?.focus(), 50);
+  };
+
+  const handleUnschedule = () => {
+    toolbarTapRef.current = true;
+    onUnscheduleTask?.(task.id);
+    setIsEditing(false);
+    setShowTypeSelector(false);
   };
 
   const showAllDay = isEvent && task.isAllDay && !task.startTime;
@@ -142,6 +158,14 @@ export function TaskItem({ task, list, allLists, onToggleComplete, onUpdateTitle
               >
                 <PlusIcon size={10} color={colors.content} />
                 <Text style={styles.moreButtonText}>More</Text>
+              </Pressable>
+              <View style={styles.toolbarDivider} />
+              <Pressable
+                style={styles.moreButton}
+                onPressIn={handleUnschedule}
+              >
+                <PenToSquareIcon size={12} color={colors.content} />
+                <Text style={styles.moreButtonText}>Reschedule</Text>
               </Pressable>
             </View>
             {showTypeSelector && allLists && (
@@ -258,6 +282,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 4,
+    minHeight: 32,
+    paddingVertical: 8,
   },
   moreButtonText: {
     ...typography.bodyLarge,

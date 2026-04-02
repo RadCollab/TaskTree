@@ -18,6 +18,7 @@ interface DraggableTaskListProps {
   onToggleComplete: (id: string) => void;
   onUpdateTitle?: (id: string, title: string) => void;
   onUpdateList?: (id: string, listId: string) => void;
+  onUnscheduleTask?: (id: string) => void;
   onReorder: (orderedIds: string[]) => void;
   gap?: number;
 }
@@ -31,6 +32,7 @@ export function DraggableTaskList({
   onToggleComplete,
   onUpdateTitle,
   onUpdateList,
+  onUnscheduleTask,
   onReorder,
   gap = spacing.lg,
 }: DraggableTaskListProps) {
@@ -166,6 +168,7 @@ export function DraggableTaskList({
           onToggleComplete={onToggleComplete}
           onUpdateTitle={onUpdateTitle}
           onUpdateList={onUpdateList}
+          onUnscheduleTask={onUnscheduleTask}
           activeIndex={activeIndex}
           activeItemHeight={activeItemHeight}
           dragTranslation={dragTranslation}
@@ -190,6 +193,7 @@ interface DraggableItemProps {
   onToggleComplete: (id: string) => void;
   onUpdateTitle?: (id: string, title: string) => void;
   onUpdateList?: (id: string, listId: string) => void;
+  onUnscheduleTask?: (id: string) => void;
   activeIndex: SharedValue<number>;
   activeItemHeight: SharedValue<number>;
   dragTranslation: SharedValue<number>;
@@ -210,6 +214,7 @@ function DraggableItem({
   onToggleComplete,
   onUpdateTitle,
   onUpdateList,
+  onUnscheduleTask,
   activeIndex,
   activeItemHeight,
   dragTranslation,
@@ -335,6 +340,7 @@ function DraggableItem({
           onToggleComplete={onToggleComplete}
           onUpdateTitle={onUpdateTitle}
           onUpdateList={onUpdateList}
+          onUnscheduleTask={onUnscheduleTask}
         />
       </Animated.View>
     </GestureDetector>
