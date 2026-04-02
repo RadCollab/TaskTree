@@ -7,10 +7,26 @@ export interface Task {
   isPriority: boolean;
   isCompleted: boolean;
   completedAt?: string;
+  dueDate?: string;
+  scheduledDate?: string;
   date?: string;
   startTime?: string;
   durationMinutes?: number;
   endTime?: string;
+  timePreference?: 'custom' | 'morning' | 'midday' | 'afternoon' | 'evening' | 'flexible';
+  timePreferenceStart?: string;
+  timePreferenceEnd?: string;
+  repeatConfig?: {
+    enabled: boolean;
+    interval: number;
+    unit: 'hour' | 'day' | 'week' | 'month';
+    daysOfWeek?: Array<'mo' | 'tu' | 'we' | 'th' | 'fr' | 'sa' | 'su'>;
+    dayOfMonth?: number;
+  };
+  notificationConfig?: {
+    enabled: boolean;
+    offsetMinutes: number;
+  };
   isAllDay: boolean;
   repeats: boolean;
   notificationEnabled: boolean;
