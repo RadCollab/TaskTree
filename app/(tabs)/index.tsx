@@ -27,7 +27,7 @@ const SLIDE_TIMING = { duration: 400, easing: Easing.out(Easing.cubic) };
 
 export default function MainScreen() {
   const {
-    tasks, lists, toggleComplete, addTask, updateTaskTitle,
+    tasks, lists, toggleComplete, addTask, updateTaskTitle, updateTaskDetails,
     reorderTasks, updateTaskList, toggleSelected, selectedIds, clearSelection, unscheduleTask,
     scheduleTaskIds, deleteTasks, createList, updateList, reorderLists,
   } = useTaskTree();
@@ -44,7 +44,9 @@ export default function MainScreen() {
   const addInputRef = useRef<TextInput>(null);
 
   const today = new Date().toISOString().split('T')[0];
-  const todayTasks = tasks.filter((t) => t.date === today);
+  const todayTasks = tasks.filter((t) =>
+    t.type === 'event' ? t.date === today : t.scheduledDate === today
+  );
 
   // The schedule section height = screen height minus tab bar area
   const TAB_BAR_HEIGHT = 70;
@@ -90,6 +92,8 @@ export default function MainScreen() {
               onToggleComplete={toggleComplete}
               onUpdateTitle={updateTaskTitle}
               onUpdateList={updateTaskList}
+              onUpdateDetails={updateTaskDetails}
+              onManageLists={() => setIsManageListsOpen(true)}
               onUnscheduleTask={unscheduleTask}
               onReorder={reorderTasks}
             />
@@ -156,7 +160,11 @@ export default function MainScreen() {
               <ListSection
                 key={list.id}
                 list={list}
-                tasks={tasks.filter((t) => t.listId === list.id && !t.isCompleted && !t.date)}
+                tasks={tasks.filter((t) =>
+                  t.listId === list.id &&
+                  !t.isCompleted &&
+                  (t.type === 'event' ? !t.date : !t.scheduledDate)
+                )}
                 onToggleComplete={toggleComplete}
                 onToggleSelected={toggleSelected}
                 onAddTask={addTask}

@@ -18,6 +18,8 @@ interface DraggableTaskListProps {
   onToggleComplete: (id: string) => void;
   onUpdateTitle?: (id: string, title: string) => void;
   onUpdateList?: (id: string, listId: string) => void;
+  onUpdateDetails?: (id: string, updates: Partial<Task>) => void;
+  onManageLists?: () => void;
   onUnscheduleTask?: (id: string) => void;
   onReorder: (orderedIds: string[]) => void;
   gap?: number;
@@ -32,6 +34,8 @@ export function DraggableTaskList({
   onToggleComplete,
   onUpdateTitle,
   onUpdateList,
+  onUpdateDetails,
+  onManageLists,
   onUnscheduleTask,
   onReorder,
   gap = spacing.lg,
@@ -168,6 +172,8 @@ export function DraggableTaskList({
           onToggleComplete={onToggleComplete}
           onUpdateTitle={onUpdateTitle}
           onUpdateList={onUpdateList}
+          onUpdateDetails={onUpdateDetails}
+          onManageLists={onManageLists}
           onUnscheduleTask={onUnscheduleTask}
           activeIndex={activeIndex}
           activeItemHeight={activeItemHeight}
@@ -193,6 +199,8 @@ interface DraggableItemProps {
   onToggleComplete: (id: string) => void;
   onUpdateTitle?: (id: string, title: string) => void;
   onUpdateList?: (id: string, listId: string) => void;
+  onUpdateDetails?: (id: string, updates: Partial<Task>) => void;
+  onManageLists?: () => void;
   onUnscheduleTask?: (id: string) => void;
   activeIndex: SharedValue<number>;
   activeItemHeight: SharedValue<number>;
@@ -214,6 +222,8 @@ function DraggableItem({
   onToggleComplete,
   onUpdateTitle,
   onUpdateList,
+  onUpdateDetails,
+  onManageLists,
   onUnscheduleTask,
   activeIndex,
   activeItemHeight,
@@ -340,6 +350,8 @@ function DraggableItem({
           onToggleComplete={onToggleComplete}
           onUpdateTitle={onUpdateTitle}
           onUpdateList={onUpdateList}
+          onUpdateDetails={onUpdateDetails}
+          onManageLists={onManageLists}
           onUnscheduleTask={onUnscheduleTask}
         />
       </Animated.View>

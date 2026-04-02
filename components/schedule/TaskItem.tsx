@@ -5,6 +5,7 @@ import { Task, TaskList } from '@/data/types';
 import { PenToSquareIcon, PriorityIcon, PlusIcon } from '@/components/icons';
 import { TaskTypeIcon } from '@/components/icons/TaskTypeIcon';
 import { TypeSelector } from './TypeSelector';
+import { TaskDetailsSheet } from './TaskDetailsSheet';
 
 interface TaskItemProps {
   task: Task;
@@ -13,6 +14,8 @@ interface TaskItemProps {
   onToggleComplete: (id: string) => void;
   onUpdateTitle?: (id: string, title: string) => void;
   onUpdateList?: (id: string, listId: string) => void;
+  onUpdateDetails?: (id: string, updates: Partial<Task>) => void;
+  onManageLists?: () => void;
   onUnscheduleTask?: (id: string) => void;
 }
 
@@ -23,6 +26,8 @@ export function TaskItem({
   onToggleComplete,
   onUpdateTitle,
   onUpdateList,
+  onUpdateDetails,
+  onManageLists,
   onUnscheduleTask,
 }: TaskItemProps) {
   const isEvent = task.type === 'event';
@@ -31,8 +36,10 @@ export function TaskItem({
   const [editText, setEditText] = useState(task.title);
   const [selection, setSelection] = useState<{ start: number; end: number } | undefined>(undefined);
   const [showTypeSelector, setShowTypeSelector] = useState(false);
+  const [showDetailsSheet, setShowDetailsSheet] = useState(false);
   const inputRef = useRef<TextInput>(null);
   const toolbarTapRef = useRef(false);
+  const today = new Date().toISOString().split('T')[0];
 
   const handleContentPress = () => {
     if (task.isCompleted) return;
@@ -78,10 +85,13 @@ export function TaskItem({
     setShowTypeSelector(false);
   };
 
+  const isOverdue = !isEvent && !!task.scheduledDate && task.scheduledDate === today && !!task.dueDate && task.dueDate < today;
   const showAllDay = isEvent && task.isAllDay && !task.startTime;
+  const showTaskWindow = !isEvent && task.timePreference === 'custom' && task.timePreferenceStart && task.timePreferenceEnd;
 
   return (
-    <View style={[styles.container, task.isCompleted && styles.containerCompleted]}>
+    <>
+      <View style={[styles.container, task.isCompleted && styles.containerCompleted]}>
       {/* Checkbox */}
       <Pressable
         style={[styles.checkboxContainer, !task.isCompleted && { opacity: 0.5 }]}
@@ -154,7 +164,7 @@ export function TaskItem({
               <Pressable
                 style={styles.moreButton}
                 onPressIn={() => { toolbarTapRef.current = true; }}
-                onPress={() => {}}
+                onPress={() => setShowDetailsSheet(true)}
               >
                 <PlusIcon size={10} color={colors.content} />
                 <Text style={styles.moreButtonText}>More</Text>
@@ -184,14 +194,33 @@ export function TaskItem({
           </View>
         )}
 
-        {/* Properties row (e.g. All Day) */}
-        {showAllDay && !task.isCompleted && !isEditing && (
+        {/* Properties row */}
+        {(showAllDay || isOverdue || showTaskWindow) && !task.isCompleted && !isEditing && (
           <View style={styles.properties}>
-            <Text style={styles.propertyText}>All Day</Text>
+            {showAllDay && <Text style={styles.propertyText}>All Day</Text>}
+            {isOverdue && <Text style={[styles.propertyText, styles.overdueText]}>Overdue</Text>}
+            {showTaskWindow && (
+              <Text style={styles.propertyText}>
+                {task.timePreferenceStart} - {task.timePreferenceEnd}
+              </Text>
+            )}
           </View>
         )}
       </Pressable>
-    </View>
+      </View>
+
+      <TaskDetailsSheet
+        task={task}
+        lists={allLists ?? []}
+        visible={showDetailsSheet}
+        onClose={() => setShowDetailsSheet(false)}
+        onManageLists={() => onManageLists?.()}
+        onSave={(taskId, updates) => {
+          onUpdateDetails?.(taskId, updates);
+          setShowDetailsSheet(false);
+        }}
+      />
+    </>
   );
 }
 
@@ -300,9 +329,15 @@ const styles = StyleSheet.create({
   },
   properties: {
     paddingBottom: 14,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
   },
   propertyText: {
     ...typography.bodyLarge,
     color: colors.content,
+  },
+  overdueText: {
+    color: colors.types.red,
   },
 });

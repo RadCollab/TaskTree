@@ -31,6 +31,7 @@ interface TaskTreeState {
   clearSelection: () => void;
   addTask: (title: string, listId?: string) => void;
   updateTaskTitle: (taskId: string, title: string) => void;
+  updateTaskDetails: (taskId: string, updates: Partial<Task>) => void;
   unscheduleTask: (taskId: string) => void;
   reorderTasks: (orderedIds: string[]) => void;
   updateTaskList: (taskId: string, listId: string) => void;
@@ -49,6 +50,47 @@ interface PersistedTaskTreeState {
   tasks: Task[];
 }
 
+function getTodayRepeatDay(): 'mo' | 'tu' | 'we' | 'th' | 'fr' | 'sa' | 'su' {
+  return ['su', 'mo', 'tu', 'we', 'th', 'fr', 'sa'][new Date().getDay()] as 'mo' | 'tu' | 'we' | 'th' | 'fr' | 'sa' | 'su';
+}
+
+function getTodayDayOfMonth() {
+  return new Date().getDate();
+}
+
+function normalizeTask(task: Task): Task {
+  const repeats = task.repeatConfig?.enabled ?? task.repeats ?? false;
+  const notificationEnabled = task.notificationConfig?.enabled ?? task.notificationEnabled ?? false;
+  const scheduledDate =
+    task.type === 'task'
+      ? task.scheduledDate ?? task.date
+      : task.scheduledDate;
+
+  return {
+    ...task,
+    scheduledDate,
+    dueDate: task.dueDate,
+    date: task.type === 'event' ? task.date ?? task.scheduledDate : task.date,
+    repeatConfig: task.repeatConfig ?? {
+      enabled: repeats,
+      interval: 1,
+      unit: 'day',
+      daysOfWeek: [getTodayRepeatDay()],
+      dayOfMonth: getTodayDayOfMonth(),
+    },
+    notificationConfig: task.notificationConfig ?? {
+      enabled: notificationEnabled,
+      offsetMinutes: 10,
+    },
+    repeats,
+    notificationEnabled,
+  };
+}
+
+function normalizeTasks(tasks: Task[]): Task[] {
+  return tasks.map(normalizeTask);
+}
+
 function normalizeLists(lists: TaskList[]): TaskList[] {
   return lists
     .map((list, index) => ({
@@ -62,7 +104,7 @@ function normalizeLists(lists: TaskList[]): TaskList[] {
 
 export function TaskTreeProvider({ children }: { children: ReactNode }) {
   const [lists, setLists] = useState<TaskList[]>(mockLists);
-  const [tasks, setTasks] = useState<Task[]>(mockTasks);
+  const [tasks, setTasks] = useState<Task[]>(normalizeTasks(mockTasks));
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [isHydrated, setIsHydrated] = useState(false);
 
@@ -76,21 +118,21 @@ export function TaskTreeProvider({ children }: { children: ReactNode }) {
 
         if (!raw) {
           setLists(normalizeLists(mockLists));
-          setTasks(mockTasks);
+          setTasks(normalizeTasks(mockTasks));
           setIsHydrated(true);
           return;
         }
 
         const parsed = JSON.parse(raw) as Partial<PersistedTaskTreeState>;
         const nextLists = Array.isArray(parsed.lists) ? normalizeLists(parsed.lists) : normalizeLists(mockLists);
-        const nextTasks = Array.isArray(parsed.tasks) ? parsed.tasks : mockTasks;
+        const nextTasks = Array.isArray(parsed.tasks) ? normalizeTasks(parsed.tasks) : normalizeTasks(mockTasks);
 
         setLists(nextLists);
         setTasks(nextTasks);
       } catch {
         if (!isMounted) return;
         setLists(normalizeLists(mockLists));
-        setTasks(mockTasks);
+        setTasks(normalizeTasks(mockTasks));
       } finally {
         if (isMounted) setIsHydrated(true);
       }
@@ -154,14 +196,24 @@ export function TaskTreeProvider({ children }: { children: ReactNode }) {
       type: targetList?.behavior ?? 'task',
       isPriority: false,
       isCompleted: false,
-      date: listId ? undefined : today,
-      isAllDay: false,
+      scheduledDate: targetList?.behavior === 'task' && !listId ? today : undefined,
+      date: targetList?.behavior === 'event' ? today : undefined,
+      isAllDay: targetList?.behavior === 'event',
       repeats: targetList?.defaultRepeats ?? false,
       notificationEnabled: targetList?.defaultNotificationEnabled ?? false,
+      repeatConfig: {
+        enabled: targetList?.defaultRepeats ?? false,
+        interval: 1,
+        unit: 'week',
+      },
+      notificationConfig: {
+        enabled: targetList?.defaultNotificationEnabled ?? false,
+        offsetMinutes: 10,
+      },
       createdAt: now,
       updatedAt: now,
     };
-    setTasks((prev) => [...prev, newTask]);
+    setTasks((prev) => [...prev, normalizeTask(newTask)]);
   }, [lists]);
 
   const updateTaskTitle = useCallback((taskId: string, title: string) => {
@@ -174,6 +226,61 @@ export function TaskTreeProvider({ children }: { children: ReactNode }) {
     );
   }, []);
 
+  const updateTaskDetails = useCallback((taskId: string, updates: Partial<Task>) => {
+    const now = new Date().toISOString();
+    setTasks((prev) =>
+      prev.map((task) => {
+        if (task.id !== taskId) return task;
+
+        const nextType = updates.type ?? task.type;
+        let nextListId = updates.listId ?? task.listId;
+        const targetList = lists.find((list) => list.id === nextListId);
+
+        if (!updates.listId && targetList && targetList.behavior !== nextType) {
+          const fallbackList = lists.find((list) => list.isSystem && list.behavior === nextType);
+          if (fallbackList) nextListId = fallbackList.id;
+        }
+
+        const merged = normalizeTask({
+          ...task,
+          ...updates,
+          listId: nextListId,
+          type: nextType,
+          repeats: updates.repeatConfig?.enabled ?? updates.repeats ?? task.repeats,
+          notificationEnabled:
+            updates.notificationConfig?.enabled ?? updates.notificationEnabled ?? task.notificationEnabled,
+          updatedAt: now,
+        });
+
+        if (nextType === 'task') {
+          const derivedDuration =
+            merged.startTime && merged.endTime
+              ? Math.max(15, ((parseInt(merged.endTime.slice(0, 2), 10) * 60 + parseInt(merged.endTime.slice(3), 10))
+                - (parseInt(merged.startTime.slice(0, 2), 10) * 60 + parseInt(merged.startTime.slice(3), 10))) || 0)
+              : merged.durationMinutes;
+
+          return normalizeTask({
+            ...merged,
+            scheduledDate: merged.scheduledDate ?? merged.date,
+            durationMinutes: derivedDuration,
+            endTime: undefined,
+            date: undefined,
+            isAllDay: false,
+          });
+        }
+
+        return normalizeTask({
+          ...merged,
+          date: merged.date ?? merged.scheduledDate,
+          scheduledDate: undefined,
+          timePreference: undefined,
+          timePreferenceStart: undefined,
+          timePreferenceEnd: undefined,
+        });
+      })
+    );
+  }, [lists]);
+
   const unscheduleTask = useCallback((taskId: string) => {
     const now = new Date().toISOString();
     setTasks((prev) =>
@@ -181,7 +288,8 @@ export function TaskTreeProvider({ children }: { children: ReactNode }) {
         task.id === taskId
           ? {
               ...task,
-              date: undefined,
+              scheduledDate: undefined,
+              date: task.type === 'event' ? undefined : task.date,
               startTime: undefined,
               endTime: undefined,
               isAllDay: false,
@@ -222,7 +330,24 @@ export function TaskTreeProvider({ children }: { children: ReactNode }) {
     setTasks((prev) =>
       prev.map((t) =>
         t.id === taskId
-          ? { ...t, listId, type: targetList.behavior, updatedAt: new Date().toISOString() }
+          ? normalizeTask({
+              ...t,
+              listId,
+              type: targetList.behavior,
+              scheduledDate:
+                targetList.behavior === 'task'
+                  ? t.scheduledDate ?? t.date
+                  : undefined,
+              date:
+                targetList.behavior === 'event'
+                  ? t.date ?? t.scheduledDate
+                  : undefined,
+              endTime: targetList.behavior === 'task' ? undefined : t.endTime,
+              timePreference: targetList.behavior === 'event' ? undefined : t.timePreference,
+              timePreferenceStart: targetList.behavior === 'event' ? undefined : t.timePreferenceStart,
+              timePreferenceEnd: targetList.behavior === 'event' ? undefined : t.timePreferenceEnd,
+              updatedAt: new Date().toISOString(),
+            })
           : t
       )
     );
@@ -234,7 +359,14 @@ export function TaskTreeProvider({ children }: { children: ReactNode }) {
     const idSet = new Set(taskIds);
     setTasks((prev) =>
       prev.map((t) =>
-        idSet.has(t.id) ? { ...t, date: today, updatedAt: now } : t
+        idSet.has(t.id)
+          ? normalizeTask({
+              ...t,
+              scheduledDate: t.type === 'task' ? today : undefined,
+              date: t.type === 'event' ? today : t.date,
+              updatedAt: now,
+            })
+          : t
       )
     );
   }, []);
@@ -303,6 +435,7 @@ export function TaskTreeProvider({ children }: { children: ReactNode }) {
         clearSelection,
         addTask,
         updateTaskTitle,
+        updateTaskDetails,
         unscheduleTask,
         reorderTasks,
         updateTaskList,
