@@ -12,6 +12,7 @@ interface ListSectionProps {
   onToggleSelected: (id: string) => void;
   onAddTask: (title: string, listId: string) => void;
   onUpdateTaskTitle: (id: string, title: string) => void;
+  onDeleteTask: (id: string) => void;
   selectedIds: Set<string>;
 }
 
@@ -22,6 +23,7 @@ export function ListSection({
   onToggleSelected,
   onAddTask,
   onUpdateTaskTitle,
+  onDeleteTask,
   selectedIds,
 }: ListSectionProps) {
   const [isExpanded, setIsExpanded] = useState(true);
@@ -63,6 +65,8 @@ export function ListSection({
     const trimmed = editingTaskText.trim();
     if (trimmed) {
       onUpdateTaskTitle(taskId, trimmed);
+    } else {
+      onDeleteTask(taskId);
     }
     setEditingTaskId(null);
     setEditingTaskText('');

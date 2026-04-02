@@ -18,6 +18,7 @@ import { useTaskTree } from '@/data/store';
 import { RivePlaceholder } from '@/components/schedule/RivePlaceholder';
 import { AgendaHeader } from '@/components/schedule/AgendaHeader';
 import { DraggableTaskList } from '@/components/schedule/DraggableTaskList';
+import { ScheduleEmptyState } from '@/components/schedule/ScheduleEmptyState';
 import { ListSection } from '@/components/planning/ListSection';
 import { ManageListsFlow } from '@/components/planning/ManageListsFlow';
 import { MultiSelectBar } from '@/components/planning/MultiSelectBar';
@@ -41,6 +42,7 @@ export default function MainScreen() {
   // Schedule state
   const [isAdding, setIsAdding] = useState(false);
   const [newTaskText, setNewTaskText] = useState('');
+  const [scheduleListId, setScheduleListId] = useState<string | undefined>(undefined);
   const addInputRef = useRef<TextInput>(null);
 
   const today = new Date().toISOString().split('T')[0];
@@ -65,15 +67,17 @@ export default function MainScreen() {
   }));
 
   // Schedule handlers
-  const handleAddPress = () => {
+  const handleAddPress = (listId?: string) => {
+    setScheduleListId(listId);
     setIsAdding(true);
     setTimeout(() => addInputRef.current?.focus(), 50);
   };
 
   const handleAddSubmit = () => {
     const trimmed = newTaskText.trim();
-    if (trimmed) addTask(trimmed);
+    if (trimmed) addTask(trimmed, scheduleListId, today);
     setNewTaskText('');
+    setScheduleListId(undefined);
     setIsAdding(false);
   };
 
@@ -84,7 +88,7 @@ export default function MainScreen() {
         <View style={[styles.scheduleSection, { height: scheduleHeight, paddingTop: insets.top }]}>
           <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
             <RivePlaceholder />
-            <AgendaHeader />
+            <AgendaHeader hideActions={isScheduleEmpty} />
 
             <DraggableTaskList
               tasks={todayTasks}
@@ -109,21 +113,21 @@ export default function MainScreen() {
                   value={newTaskText}
                   onChangeText={setNewTaskText}
                   onBlur={handleAddSubmit}
-                  placeholder="New task..."
+                  placeholder={`New ${isAddingEvent ? 'event' : 'task'}...`}
                   placeholderTextColor={colors.borderDk}
                   multiline
                   blurOnSubmit
                   returnKeyType="done"
                 />
               </View>
-            ) : (
-              <Pressable style={styles.addButton} onPress={handleAddPress}>
+            ) : !isScheduleEmpty ? (
+              <Pressable style={styles.addButton} onPress={() => handleAddPress()}>
                 <View style={styles.addIconContainer}>
                   <Text style={styles.addIconPlus}>+</Text>
                 </View>
                 <Text style={styles.addText}>Add</Text>
               </Pressable>
-            )}
+            ) : null}
 
             <View style={{ height: 40 }} />
           </ScrollView>
@@ -169,6 +173,7 @@ export default function MainScreen() {
                 onToggleSelected={toggleSelected}
                 onAddTask={addTask}
                 onUpdateTaskTitle={updateTaskTitle}
+                onDeleteTask={(taskId) => deleteTasks([taskId])}
                 selectedIds={selectedIds}
               />
             ))}

@@ -17,6 +17,7 @@ interface DraggableTaskListProps {
   lists: TaskList[];
   onToggleComplete: (id: string) => void;
   onUpdateTitle?: (id: string, title: string) => void;
+  onDeleteTask?: (id: string) => void;
   onUpdateList?: (id: string, listId: string) => void;
   onUpdateDetails?: (id: string, updates: Partial<Task>) => void;
   onManageLists?: () => void;
@@ -33,6 +34,7 @@ export function DraggableTaskList({
   lists,
   onToggleComplete,
   onUpdateTitle,
+  onDeleteTask,
   onUpdateList,
   onUpdateDetails,
   onManageLists,
@@ -171,6 +173,7 @@ export function DraggableTaskList({
           allLists={lists}
           onToggleComplete={onToggleComplete}
           onUpdateTitle={onUpdateTitle}
+          onDeleteTask={onDeleteTask}
           onUpdateList={onUpdateList}
           onUpdateDetails={onUpdateDetails}
           onManageLists={onManageLists}
@@ -198,6 +201,7 @@ interface DraggableItemProps {
   allLists: TaskList[];
   onToggleComplete: (id: string) => void;
   onUpdateTitle?: (id: string, title: string) => void;
+  onDeleteTask?: (id: string) => void;
   onUpdateList?: (id: string, listId: string) => void;
   onUpdateDetails?: (id: string, updates: Partial<Task>) => void;
   onManageLists?: () => void;
@@ -221,6 +225,7 @@ function DraggableItem({
   allLists,
   onToggleComplete,
   onUpdateTitle,
+  onDeleteTask,
   onUpdateList,
   onUpdateDetails,
   onManageLists,
@@ -349,6 +354,7 @@ function DraggableItem({
           allLists={allLists}
           onToggleComplete={onToggleComplete}
           onUpdateTitle={onUpdateTitle}
+          onDeleteTask={onDeleteTask}
           onUpdateList={onUpdateList}
           onUpdateDetails={onUpdateDetails}
           onManageLists={onManageLists}

@@ -13,6 +13,7 @@ interface TaskItemProps {
   allLists?: TaskList[];
   onToggleComplete: (id: string) => void;
   onUpdateTitle?: (id: string, title: string) => void;
+  onDeleteTask?: (id: string) => void;
   onUpdateList?: (id: string, listId: string) => void;
   onUpdateDetails?: (id: string, updates: Partial<Task>) => void;
   onManageLists?: () => void;
@@ -25,6 +26,7 @@ export function TaskItem({
   allLists,
   onToggleComplete,
   onUpdateTitle,
+  onDeleteTask,
   onUpdateList,
   onUpdateDetails,
   onManageLists,
@@ -61,7 +63,9 @@ export function TaskItem({
         return;
       }
       const trimmed = editText.trim();
-      if (trimmed && trimmed !== task.title) {
+      if (!trimmed) {
+        onDeleteTask?.(task.id);
+      } else if (trimmed !== task.title) {
         onUpdateTitle?.(task.id, trimmed);
       } else {
         setEditText(task.title);
@@ -69,7 +73,7 @@ export function TaskItem({
       setIsEditing(false);
       setShowTypeSelector(false);
     }, 100);
-  }, [editText, task.title, task.id, onUpdateTitle]);
+  }, [editText, task.title, task.id, onDeleteTask, onUpdateTitle]);
 
   const handleTypeSelect = (listId: string) => {
     toolbarTapRef.current = true;

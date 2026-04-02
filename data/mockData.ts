@@ -1,14 +1,11 @@
 import { Task, TaskList } from './types';
-import { colors } from '@/constants/theme';
-
-const today = new Date().toISOString().split('T')[0];
 
 export const mockLists: TaskList[] = [
   {
     id: 'list-tasks',
     name: 'Tasks',
-    color: colors.types.indigo,
-    icon: 'heart',
+    color: '#2e6d34',
+    icon: 'circle',
     behavior: 'task',
     defaultRepeats: false,
     defaultNotificationEnabled: false,
@@ -18,24 +15,13 @@ export const mockLists: TaskList[] = [
   {
     id: 'list-events',
     name: 'Events',
-    color: colors.types.forest,
-    icon: 'heart',
+    color: '#492e97',
+    icon: 'square',
     behavior: 'event',
     defaultRepeats: false,
     defaultNotificationEnabled: false,
     isSystem: true,
     sortOrder: 1,
-  },
-  {
-    id: 'list-standup',
-    name: 'Custom task',
-    color: colors.types.rose,
-    icon: 'heart',
-    behavior: 'task',
-    defaultRepeats: false,
-    defaultNotificationEnabled: false,
-    isSystem: false,
-    sortOrder: 2,
   },
 ];
 

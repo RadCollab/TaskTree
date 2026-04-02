@@ -2,11 +2,11 @@ import { AutoScheduleIcon, SortIcon } from '@/components/icons';
 import { colors, spacing, typography } from '@/constants/theme';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-export function AgendaHeader() {
+export function AgendaHeader({ hideActions = false }: { hideActions?: boolean }) {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Agenda</Text>
-      <View style={styles.actions}>
+      <View style={[styles.actions, hideActions && styles.actionsHidden]}>
         <Pressable style={styles.iconButton}>
           <AutoScheduleIcon size={16} color={colors.content} />
         </Pressable>
@@ -35,6 +35,9 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: 'row',
     gap: spacing.sm,
+  },
+  actionsHidden: {
+    opacity: 0,
   },
   iconButton: {
     width: 40,

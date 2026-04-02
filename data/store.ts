@@ -29,7 +29,7 @@ interface TaskTreeState {
   toggleComplete: (taskId: string) => void;
   toggleSelected: (taskId: string) => void;
   clearSelection: () => void;
-  addTask: (title: string, listId?: string) => void;
+  addTask: (title: string, listId?: string, date?: string) => void;
   updateTaskTitle: (taskId: string, title: string) => void;
   updateTaskDetails: (taskId: string, updates: Partial<Task>) => void;
   unscheduleTask: (taskId: string) => void;
@@ -43,7 +43,7 @@ interface TaskTreeState {
 }
 
 const TaskTreeContext = createContext<TaskTreeState | null>(null);
-const STORAGE_KEY = 'tasktree.local.v1';
+const STORAGE_KEY = 'tasktree.local.v2';
 
 interface PersistedTaskTreeState {
   lists: TaskList[];
@@ -185,7 +185,7 @@ export function TaskTreeProvider({ children }: { children: ReactNode }) {
     setSelectedIds(new Set());
   }, []);
 
-  const addTask = useCallback((title: string, listId?: string) => {
+  const addTask = useCallback((title: string, listId?: string, date?: string) => {
     const now = new Date().toISOString();
     const today = now.split('T')[0];
     const targetList = lists.find((l) => l.id === (listId ?? 'list-tasks'));
