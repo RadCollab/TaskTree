@@ -1,5 +1,7 @@
 import { Task, TaskList } from './types';
 
+const today = new Date().toISOString().split('T')[0];
+
 export const mockLists: TaskList[] = [
   {
     id: 'list-tasks',

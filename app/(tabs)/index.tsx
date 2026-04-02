@@ -49,6 +49,11 @@ export default function MainScreen() {
   const todayTasks = tasks.filter((t) =>
     t.type === 'event' ? t.date === today : t.scheduledDate === today
   );
+  const isScheduleEmpty = todayTasks.length === 0;
+  const taskListId = lists.find((list) => list.isSystem && list.behavior === 'task')?.id;
+  const eventListId = lists.find((list) => list.isSystem && list.behavior === 'event')?.id;
+  const isAddingEvent =
+    !!scheduleListId && (lists.find((list) => list.id === scheduleListId)?.behavior === 'event');
 
   // The schedule section height = screen height minus tab bar area
   const TAB_BAR_HEIGHT = 70;
@@ -90,17 +95,24 @@ export default function MainScreen() {
             <RivePlaceholder />
             <AgendaHeader hideActions={isScheduleEmpty} />
 
-            <DraggableTaskList
-              tasks={todayTasks}
-              lists={lists}
-              onToggleComplete={toggleComplete}
-              onUpdateTitle={updateTaskTitle}
-              onUpdateList={updateTaskList}
-              onUpdateDetails={updateTaskDetails}
-              onManageLists={() => setIsManageListsOpen(true)}
-              onUnscheduleTask={unscheduleTask}
-              onReorder={reorderTasks}
-            />
+            {isScheduleEmpty && !isAdding ? (
+              <ScheduleEmptyState
+                onAddTask={() => handleAddPress(taskListId)}
+                onAddEvent={() => handleAddPress(eventListId)}
+              />
+            ) : (
+              <DraggableTaskList
+                tasks={todayTasks}
+                lists={lists}
+                onToggleComplete={toggleComplete}
+                onUpdateTitle={updateTaskTitle}
+                onUpdateList={updateTaskList}
+                onUpdateDetails={updateTaskDetails}
+                onManageLists={() => setIsManageListsOpen(true)}
+                onUnscheduleTask={unscheduleTask}
+                onReorder={reorderTasks}
+              />
+            )}
 
             {isAdding ? (
               <View style={styles.addInputRow}>
