@@ -50,6 +50,31 @@ export function AutoScheduleIcon({ size = 16, color = '#312a47' }: IconProps) {
   );
 }
 
+export function DateIcon({ size = 12, color = '#312a47' }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 12 12" fill="none">
+      <Path
+        d="M3.59998 0C4.01482 0 4.34998 0.335156 4.34998 0.75L4.34998 1.5L7.34998 1.5L7.34998 0.75C7.34998 0.335156 7.68513 0 8.09998 0C8.51482 0 8.84998 0.335156 8.84998 0.75L8.84998 1.5L9.97498 1.5C10.5961 1.5 11.1 2.00391 11.1 2.625L11.1 3.75L0.599976 3.75L0.599976 2.625C0.599976 2.00391 1.10388 1.5 1.72498 1.5L2.84998 1.5L2.84998 0.75C2.84998 0.335156 3.18513 0 3.59998 0ZM0.599976 4.5L11.1 4.5L11.1 10.875C11.1 11.4961 10.5961 12 9.97498 12L1.72498 12C1.10388 12 0.599976 11.4961 0.599976 10.875L0.599976 4.5ZM2.47498 6C2.26873 6 2.09998 6.16875 2.09998 6.375L2.09998 7.875C2.09998 8.08125 2.26873 8.25 2.47498 8.25L9.22498 8.25C9.43123 8.25 9.59998 8.08125 9.59998 7.875L9.59998 6.375C9.59998 6.16875 9.43123 6 9.22498 6L2.47498 6Z"
+        fill={color}
+      />
+    </Svg>
+  );
+}
+
+export function TimeIcon({ size = 12, color = '#312a47' }: IconProps) {
+  return (
+    <Svg width={size} height={size} viewBox="0 0 12 12" fill="none">
+      <Path
+        d="M6 3.1499V5.83612C6 5.9382 6.05191 6.03327 6.13777 6.08847L8.1 7.3499"
+        stroke={color}
+        strokeWidth={1.2}
+        strokeLinecap="round"
+      />
+      <Circle cx="6.00002" cy="5.9999" r="5.1" stroke={color} strokeWidth={1.2} />
+    </Svg>
+  );
+}
+
 export function SortIcon({ size = 16, color = '#312a47' }: IconProps) {
   return (
     <Svg width={size} height={size} viewBox="0 0 16 16" fill="none">
