@@ -42,7 +42,7 @@ interface TaskTreeState {
 }
 
 const TaskTreeContext = createContext<TaskTreeState | null>(null);
-const STORAGE_KEY = 'tasktree.local.v1';
+const STORAGE_KEY = 'tasktree.local.v2';
 
 interface PersistedTaskTreeState {
   lists: TaskList[];
