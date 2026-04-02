@@ -17,6 +17,7 @@ interface DraggableTaskListProps {
   lists: TaskList[];
   onToggleComplete: (id: string) => void;
   onUpdateTitle?: (id: string, title: string) => void;
+  onDeleteTask?: (id: string) => void;
   onUpdateList?: (id: string, listId: string) => void;
   onUnscheduleTask?: (id: string) => void;
   onReorder: (orderedIds: string[]) => void;
@@ -31,6 +32,7 @@ export function DraggableTaskList({
   lists,
   onToggleComplete,
   onUpdateTitle,
+  onDeleteTask,
   onUpdateList,
   onUnscheduleTask,
   onReorder,
@@ -167,6 +169,7 @@ export function DraggableTaskList({
           allLists={lists}
           onToggleComplete={onToggleComplete}
           onUpdateTitle={onUpdateTitle}
+          onDeleteTask={onDeleteTask}
           onUpdateList={onUpdateList}
           onUnscheduleTask={onUnscheduleTask}
           activeIndex={activeIndex}
@@ -192,6 +195,7 @@ interface DraggableItemProps {
   allLists: TaskList[];
   onToggleComplete: (id: string) => void;
   onUpdateTitle?: (id: string, title: string) => void;
+  onDeleteTask?: (id: string) => void;
   onUpdateList?: (id: string, listId: string) => void;
   onUnscheduleTask?: (id: string) => void;
   activeIndex: SharedValue<number>;
@@ -213,6 +217,7 @@ function DraggableItem({
   allLists,
   onToggleComplete,
   onUpdateTitle,
+  onDeleteTask,
   onUpdateList,
   onUnscheduleTask,
   activeIndex,
@@ -339,6 +344,7 @@ function DraggableItem({
           allLists={allLists}
           onToggleComplete={onToggleComplete}
           onUpdateTitle={onUpdateTitle}
+          onDeleteTask={onDeleteTask}
           onUpdateList={onUpdateList}
           onUnscheduleTask={onUnscheduleTask}
         />

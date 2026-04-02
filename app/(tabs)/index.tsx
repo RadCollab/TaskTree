@@ -18,6 +18,7 @@ import { useTaskTree } from '@/data/store';
 import { RivePlaceholder } from '@/components/schedule/RivePlaceholder';
 import { AgendaHeader } from '@/components/schedule/AgendaHeader';
 import { DraggableTaskList } from '@/components/schedule/DraggableTaskList';
+import { ScheduleEmptyState } from '@/components/schedule/ScheduleEmptyState';
 import { ListSection } from '@/components/planning/ListSection';
 import { ManageListsFlow } from '@/components/planning/ManageListsFlow';
 import { MultiSelectBar } from '@/components/planning/MultiSelectBar';
@@ -41,10 +42,14 @@ export default function MainScreen() {
   // Schedule state
   const [isAdding, setIsAdding] = useState(false);
   const [newTaskText, setNewTaskText] = useState('');
+  const [scheduleListId, setScheduleListId] = useState<string | undefined>(undefined);
   const addInputRef = useRef<TextInput>(null);
 
   const today = new Date().toISOString().split('T')[0];
   const todayTasks = tasks.filter((t) => t.date === today);
+  const isScheduleEmpty = todayTasks.length === 0;
+  const scheduleList = lists.find((list) => list.id === scheduleListId);
+  const isAddingEvent = scheduleList?.behavior === 'event';
 
   // The schedule section height = screen height minus tab bar area
   const TAB_BAR_HEIGHT = 70;
@@ -63,15 +68,17 @@ export default function MainScreen() {
   }));
 
   // Schedule handlers
-  const handleAddPress = () => {
+  const handleAddPress = (listId?: string) => {
+    setScheduleListId(listId);
     setIsAdding(true);
     setTimeout(() => addInputRef.current?.focus(), 50);
   };
 
   const handleAddSubmit = () => {
     const trimmed = newTaskText.trim();
-    if (trimmed) addTask(trimmed);
+    if (trimmed) addTask(trimmed, scheduleListId, today);
     setNewTaskText('');
+    setScheduleListId(undefined);
     setIsAdding(false);
   };
 
@@ -82,17 +89,25 @@ export default function MainScreen() {
         <View style={[styles.scheduleSection, { height: scheduleHeight, paddingTop: insets.top }]}>
           <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
             <RivePlaceholder />
-            <AgendaHeader />
+            <AgendaHeader hideActions={isScheduleEmpty} />
 
-            <DraggableTaskList
-              tasks={todayTasks}
-              lists={lists}
-              onToggleComplete={toggleComplete}
-              onUpdateTitle={updateTaskTitle}
-              onUpdateList={updateTaskList}
-              onUnscheduleTask={unscheduleTask}
-              onReorder={reorderTasks}
-            />
+            {isScheduleEmpty && !isAdding ? (
+              <ScheduleEmptyState
+                onAddTask={() => handleAddPress('list-tasks')}
+                onAddEvent={() => handleAddPress('list-events')}
+              />
+            ) : (
+              <DraggableTaskList
+                tasks={todayTasks}
+                lists={lists}
+                onToggleComplete={toggleComplete}
+                onUpdateTitle={updateTaskTitle}
+                onDeleteTask={(taskId) => deleteTasks([taskId])}
+                onUpdateList={updateTaskList}
+                onUnscheduleTask={unscheduleTask}
+                onReorder={reorderTasks}
+              />
+            )}
 
             {isAdding ? (
               <View style={styles.addInputRow}>
@@ -105,21 +120,21 @@ export default function MainScreen() {
                   value={newTaskText}
                   onChangeText={setNewTaskText}
                   onBlur={handleAddSubmit}
-                  placeholder="New task..."
+                  placeholder={`New ${isAddingEvent ? 'event' : 'task'}...`}
                   placeholderTextColor={colors.borderDk}
                   multiline
                   blurOnSubmit
                   returnKeyType="done"
                 />
               </View>
-            ) : (
-              <Pressable style={styles.addButton} onPress={handleAddPress}>
+            ) : !isScheduleEmpty ? (
+              <Pressable style={styles.addButton} onPress={() => handleAddPress()}>
                 <View style={styles.addIconContainer}>
                   <Text style={styles.addIconPlus}>+</Text>
                 </View>
                 <Text style={styles.addText}>Add</Text>
               </Pressable>
-            )}
+            ) : null}
 
             <View style={{ height: 40 }} />
           </ScrollView>
@@ -161,6 +176,7 @@ export default function MainScreen() {
                 onToggleSelected={toggleSelected}
                 onAddTask={addTask}
                 onUpdateTaskTitle={updateTaskTitle}
+                onDeleteTask={(taskId) => deleteTasks([taskId])}
                 selectedIds={selectedIds}
               />
             ))}
