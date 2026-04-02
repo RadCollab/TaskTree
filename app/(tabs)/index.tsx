@@ -19,21 +19,23 @@ import { RivePlaceholder } from '@/components/schedule/RivePlaceholder';
 import { AgendaHeader } from '@/components/schedule/AgendaHeader';
 import { DraggableTaskList } from '@/components/schedule/DraggableTaskList';
 import { ListSection } from '@/components/planning/ListSection';
+import { ManageListsFlow } from '@/components/planning/ManageListsFlow';
 import { MultiSelectBar } from '@/components/planning/MultiSelectBar';
-import { ListCheckIcon, PenToSquareIcon } from '@/components/icons';
+import { EllipsisIcon, ListCheckIcon, PenToSquareIcon } from '@/components/icons';
 
 const SLIDE_TIMING = { duration: 400, easing: Easing.out(Easing.cubic) };
 
 export default function MainScreen() {
   const {
     tasks, lists, toggleComplete, addTask, updateTaskTitle,
-    reorderTasks, updateTaskList, toggleSelected, selectedIds, clearSelection,
-    scheduleTaskIds, deleteTasks,
+    reorderTasks, updateTaskList, toggleSelected, selectedIds, clearSelection, unscheduleTask,
+    scheduleTaskIds, deleteTasks, createList, updateList, reorderLists,
   } = useTaskTree();
   const insets = useSafeAreaInsets();
   const { height: screenHeight } = useWindowDimensions();
 
   const [activeTab, setActiveTab] = useState<'schedule' | 'planning'>('schedule');
+  const [isManageListsOpen, setIsManageListsOpen] = useState(false);
   const slideY = useSharedValue(0);
 
   // Schedule state
@@ -88,6 +90,7 @@ export default function MainScreen() {
               onToggleComplete={toggleComplete}
               onUpdateTitle={updateTaskTitle}
               onUpdateList={updateTaskList}
+              onUnscheduleTask={unscheduleTask}
               onReorder={reorderTasks}
             />
 
@@ -156,13 +159,15 @@ export default function MainScreen() {
                 tasks={tasks.filter((t) => t.listId === list.id && !t.isCompleted && !t.date)}
                 onToggleComplete={toggleComplete}
                 onToggleSelected={toggleSelected}
+                onAddTask={addTask}
+                onUpdateTaskTitle={updateTaskTitle}
                 selectedIds={selectedIds}
               />
             ))}
 
-            <Pressable style={styles.manageButton}>
-              <Text style={styles.manageIcon}>⚙️</Text>
-              <Text style={styles.manageText}>Manage Lists</Text>
+            <Pressable style={styles.manageButton} onPress={() => setIsManageListsOpen(true)}>
+              <EllipsisIcon size={17} color={colors.content} />
+              <Text style={styles.manageText}>Manage lists</Text>
             </Pressable>
 
             <View style={{ height: 40 }} />
@@ -194,6 +199,15 @@ export default function MainScreen() {
           />
         </View>
       </Animated.View>
+
+      <ManageListsFlow
+        lists={lists}
+        visible={isManageListsOpen}
+        onClose={() => setIsManageListsOpen(false)}
+        onCreateList={createList}
+        onUpdateList={updateList}
+        onReorderLists={reorderLists}
+      />
     </View>
   );
 }
@@ -313,16 +327,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: spacing.sm,
+    gap: 4,
     marginHorizontal: spacing.lg,
-    paddingVertical: spacing.lg,
+    alignSelf: 'center',
     marginTop: spacing.sm,
-  },
-  manageIcon: {
-    fontSize: 14,
+    paddingHorizontal: spacing.xxl,
+    paddingVertical: spacing.lg,
+    backgroundColor: colors.border,
+    borderWidth: 1,
+    borderColor: colors.borderDk,
+    borderRadius: 66,
   },
   manageText: {
-    ...typography.bodySmall,
+    ...typography.bodyLarge,
+    color: colors.content,
+  },
+  manageIcon: {
     color: colors.content,
   },
 });

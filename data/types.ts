@@ -28,6 +28,8 @@ export interface TaskList {
   color: string;
   icon: IconShape;
   behavior: 'task' | 'event';
+  defaultRepeats: boolean;
+  defaultNotificationEnabled: boolean;
   isSystem: boolean;
   sortOrder: number;
 }

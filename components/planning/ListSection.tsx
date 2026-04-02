@@ -1,7 +1,8 @@
-import { useState } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { useState, useRef } from 'react';
+import { View, Text, TextInput, StyleSheet, Pressable, Platform } from 'react-native';
 import { colors, typography, spacing } from '@/constants/theme';
 import { Task, TaskList } from '@/data/types';
+import { PlusIcon, ToggleIcon } from '@/components/icons';
 import { TaskTypeIcon } from '@/components/icons/TaskTypeIcon';
 
 interface ListSectionProps {
@@ -9,13 +10,84 @@ interface ListSectionProps {
   tasks: Task[];
   onToggleComplete: (id: string) => void;
   onToggleSelected: (id: string) => void;
+  onAddTask: (title: string, listId: string) => void;
+  onUpdateTaskTitle: (id: string, title: string) => void;
   selectedIds: Set<string>;
 }
 
-export function ListSection({ list, tasks, onToggleComplete, onToggleSelected, selectedIds }: ListSectionProps) {
+export function ListSection({
+  list,
+  tasks,
+  onToggleComplete,
+  onToggleSelected,
+  onAddTask,
+  onUpdateTaskTitle,
+  selectedIds,
+}: ListSectionProps) {
   const [isExpanded, setIsExpanded] = useState(true);
+  const [isAdding, setIsAdding] = useState(false);
+  const [newText, setNewText] = useState('');
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [editingTaskText, setEditingTaskText] = useState('');
+  const [editingSelection, setEditingSelection] = useState<{ start: number; end: number } | undefined>(undefined);
+  const inputRef = useRef<TextInput>(null);
+  const editInputRef = useRef<TextInput>(null);
   const isEvent = list.behavior === 'event';
   const isEmpty = tasks.length === 0;
+
+  const handleAddPress = () => {
+    setIsAdding(true);
+    setTimeout(() => inputRef.current?.focus(), 50);
+  };
+
+  const handleAddSubmit = () => {
+    const trimmed = newText.trim();
+    setNewText('');
+    setIsAdding(false);
+    if (trimmed) {
+      onAddTask(trimmed, list.id);
+    }
+  };
+
+  const handleStartEditing = (task: Task) => {
+    setEditingTaskId(task.id);
+    setEditingTaskText(task.title);
+    setEditingSelection({ start: task.title.length, end: task.title.length });
+    setTimeout(() => {
+      editInputRef.current?.focus();
+      setTimeout(() => setEditingSelection(undefined), 50);
+    }, 50);
+  };
+
+  const handleEditSubmit = (taskId: string) => {
+    const trimmed = editingTaskText.trim();
+    if (trimmed) {
+      onUpdateTaskTitle(taskId, trimmed);
+    }
+    setEditingTaskId(null);
+    setEditingTaskText('');
+    setEditingSelection(undefined);
+  };
+
+  const addInput = (
+    <View style={styles.addInputRow}>
+      <View style={styles.addIconContainer}>
+        <PlusIcon size={12} color={colors.content} />
+      </View>
+      <TextInput
+        ref={inputRef}
+        style={styles.addInput}
+        value={newText}
+        onChangeText={setNewText}
+        onBlur={handleAddSubmit}
+        placeholder={`New ${isEvent ? 'event' : 'task'}...`}
+        placeholderTextColor={colors.borderDk}
+        multiline
+        blurOnSubmit
+        returnKeyType="done"
+      />
+    </View>
+  );
 
   return (
     <View style={[styles.container, !isExpanded && styles.containerCollapsed]}>
@@ -31,55 +103,82 @@ export function ListSection({ list, tasks, onToggleComplete, onToggleSelected, s
             <Text style={styles.countText}>{tasks.length}</Text>
           </View>
         )}
-        <Text style={styles.chevron}>⌄</Text>
+        <View style={[styles.chevronIcon, isExpanded && styles.chevronIconExpanded]}>
+          <ToggleIcon size={14} color={colors.content} />
+        </View>
       </Pressable>
 
       {/* Items or empty state */}
       {isExpanded && (
         <>
-          {isEmpty ? (
+          {isEmpty && !isAdding ? (
             <View style={styles.emptyContainer}>
-              <Pressable style={styles.emptyAddButton}>
+              <Pressable style={styles.emptyAddButton} onPress={handleAddPress}>
                 <View style={styles.addIconContainer}>
                   <Text style={styles.addIcon}>+</Text>
                 </View>
-                <Text style={styles.emptyAddText}>Add {list.name === 'Events' ? 'Event' : 'Task'}</Text>
+                <Text style={styles.emptyAddText}>Add {isEvent ? 'Event' : 'Task'}</Text>
               </Pressable>
+            </View>
+          ) : isEmpty && isAdding ? (
+            <View style={styles.emptyContainer}>
+              {addInput}
             </View>
           ) : (
             <>
               <View style={styles.divider} />
               <View style={styles.items}>
                 {tasks.map((task) => (
-                  <Pressable
-                    key={task.id}
-                    style={styles.item}
-                    onPress={() => onToggleSelected(task.id)}
-                  >
-                    <View style={[styles.checkboxContainer, !selectedIds.has(task.id) && { opacity: 0.5 }]}>
+                  <View key={task.id} style={styles.item}>
+                    <Pressable
+                      style={[styles.checkboxContainer, selectedIds.has(task.id) && styles.checkboxContainerSelected]}
+                      hitSlop={8}
+                      onPress={() => onToggleSelected(task.id)}
+                    >
                       <TaskTypeIcon
                         shape={list.icon}
                         variant={selectedIds.has(task.id) ? 'complete' : 'incomplete'}
                         color={list.color}
                         size={14}
                       />
-                    </View>
-                    <View style={styles.itemLabel}>
-                      <Text style={styles.itemTitle}>{task.title}</Text>
-                    </View>
-                  </Pressable>
+                    </Pressable>
+                    <Pressable style={styles.itemLabel} onPress={() => handleStartEditing(task)}>
+                      {editingTaskId === task.id ? (
+                        <TextInput
+                          ref={editInputRef}
+                          style={styles.itemTitleInput}
+                          value={editingTaskText}
+                          onChangeText={setEditingTaskText}
+                          onBlur={() => handleEditSubmit(task.id)}
+                          onSubmitEditing={() => handleEditSubmit(task.id)}
+                          multiline
+                          blurOnSubmit
+                          returnKeyType="done"
+                          scrollEnabled={false}
+                          selection={editingSelection}
+                        />
+                      ) : (
+                        <Text style={styles.itemTitle}>{task.title}</Text>
+                      )}
+                    </Pressable>
+                  </View>
                 ))}
 
-                {/* Add button */}
-                <Pressable style={styles.addButton}>
-                  <View style={styles.addIconContainer}>
-                    <Text style={styles.addIcon}>+</Text>
-                  </View>
-                  <Text style={styles.addText}>Add</Text>
-                </Pressable>
+                {/* Add button / input */}
+                {isAdding ? (
+                  addInput
+                ) : (
+                  <Pressable style={styles.addButton} onPress={handleAddPress}>
+                    <View style={styles.addIconContainer}>
+                      <PlusIcon size={12} color={colors.content} />
+                    </View>
+                    <Text style={styles.addText}>Add</Text>
+                  </Pressable>
+                )}
               </View>
             </>
           )}
+
         </>
       )}
     </View>
@@ -120,10 +219,14 @@ const styles = StyleSheet.create({
     flex: 1,
     color: colors.content,
   },
-  chevron: {
-    fontSize: 18,
-    color: colors.content,
-    lineHeight: 14,
+  chevronIcon: {
+    width: 20,
+    height: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  chevronIconExpanded: {
+    transform: [{ rotate: '90deg' }],
   },
   containerCollapsed: {
     paddingVertical: 16,
@@ -161,6 +264,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 4,
+    opacity: 0.5,
+  },
+  checkboxContainerSelected: {
+    opacity: 1,
   },
   itemLabel: {
     flex: 1,
@@ -170,6 +277,14 @@ const styles = StyleSheet.create({
   itemTitle: {
     ...typography.titleMedium,
     color: colors.content,
+  },
+  itemTitleInput: {
+    ...typography.titleMedium,
+    color: colors.content,
+    padding: 0,
+    width: '100%',
+    textAlignVertical: 'top',
+    ...(Platform.OS === 'web' ? { outlineStyle: 'none' as any } : {}),
   },
   // Add button
   addButton: {
@@ -193,6 +308,22 @@ const styles = StyleSheet.create({
   addText: {
     ...typography.bodyLarge,
     color: colors.content,
+  },
+  // Add input
+  addInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    gap: 4,
+  },
+  addInput: {
+    ...typography.titleMedium,
+    color: colors.content,
+    flex: 1,
+    padding: 4,
+    backgroundColor: colors.border,
+    borderRadius: 4,
+    ...(Platform.OS === 'web' ? { outlineStyle: 'none' as any } : {}),
   },
   // Empty state
   emptyContainer: {
