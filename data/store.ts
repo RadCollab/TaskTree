@@ -189,6 +189,7 @@ export function TaskTreeProvider({ children }: { children: ReactNode }) {
     const now = new Date().toISOString();
     const today = now.split('T')[0];
     const targetList = lists.find((l) => l.id === (listId ?? 'list-tasks'));
+    const targetDate = date ?? (!listId ? today : undefined);
     const newTask: Task = {
       id: `task-${Date.now()}`,
       listId: listId ?? 'list-tasks',
@@ -196,8 +197,8 @@ export function TaskTreeProvider({ children }: { children: ReactNode }) {
       type: targetList?.behavior ?? 'task',
       isPriority: false,
       isCompleted: false,
-      scheduledDate: targetList?.behavior === 'task' && !listId ? today : undefined,
-      date: targetList?.behavior === 'event' ? today : undefined,
+      scheduledDate: targetList?.behavior === 'task' ? targetDate : undefined,
+      date: targetList?.behavior === 'event' ? targetDate : undefined,
       isAllDay: targetList?.behavior === 'event',
       repeats: targetList?.defaultRepeats ?? false,
       notificationEnabled: targetList?.defaultNotificationEnabled ?? false,
